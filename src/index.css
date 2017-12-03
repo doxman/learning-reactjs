@@ -40,6 +40,10 @@ ol, ul {
   background: #ddd;
 }
 
+.square.highlighted {
+  background: yellow;
+}
+
 .game {
   display: flex;
   flex-direction: row;
@@ -47,4 +51,8 @@ ol, ul {
 
 .game-info {
   margin-left: 20px;
+}
+
+.current-step {
+  font-weight: bold;
 }
