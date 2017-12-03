@@ -42,9 +42,12 @@ class Board extends React.Component {
 
   render() {
     const winner = calculateWinner(this.state.squares);
+    const boardIsFull = checkIfBoardIsFull(this.state.squares);
     let status;
     if (winner) {
       status = 'Winner: ' + winner;
+    } else if (boardIsFull) {
+      status = 'Tie game';
     } else {
       status = 'Next player: ' + (this.state.xIsNext ? 'X' : 'O');
     }
@@ -106,6 +109,15 @@ function calculateWinner(squares) {
     }
   }
   return null;
+}
+
+function checkIfBoardIsFull(squares) {
+  for (let i = 0; i < squares.length; i++) {
+    if (!squares[i]) {
+      return false;
+    }
+  }
+  return true;
 }
 
 // ========================================
