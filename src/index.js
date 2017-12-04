@@ -25,11 +25,11 @@ class Board extends React.Component {
   render() {
     return (
       <div>
-        {[0,1,2].map(i => {
+        {Array.from(Array(this.props.boardSize).keys()).map(i => {
           return (
             <div key={i} className="board-row">
-              {[0,1,2].map(j => {
-                const squareNumber = i * 3 + j;
+              {Array.from(Array(this.props.boardSize).keys()).map(j => {
+                const squareNumber = i * this.props.boardSize + j;
                 const isHighlightedSquare = this.props.winningLine ? this.props.winningLine.includes(squareNumber): false;
                 return this.renderSquare(squareNumber, isHighlightedSquare);
               })}
@@ -50,27 +50,67 @@ class Game extends React.Component {
       }],
       stepNumber: 0,
       xIsNext: true,
-      reverseMoveOrder: false
+      reverseMoveOrder: false,
+      boardSize: 3
     };
+
+    this.handleChange = this.handleChange.bind(this);
   }
 
   handleClick(i) {
-    const history = this.state.history.slice(0, this.state.stepNumber + 1);
-    const current = history[history.length - 1];
+    const current = this.state.history[this.state.stepNumber];
     const squares = current.squares.slice();
-    if (calculateWinner(squares) || squares[i]) {
+    if (calculateWinner(squares, this.state.boardSize) || squares[i]) {
       return;
     }
     squares[i] = this.state.xIsNext ? 'X' : 'O';
-    this.setState({
-      history: history.concat([{
-        squares: squares,
-        col: i % 3,
-        row: Math.floor(i / 3),
-      }]),
-      stepNumber: history.length,
-      xIsNext: !this.state.xIsNext
-    });
+
+    if (this.state.history.length <= this.state.stepNumber + 1 ||
+        this.state.history[this.state.stepNumber + 1].squares[i] !== squares[i]) {
+      // If this is a new step, concat
+      // If this step overrides a previous move, clobber the old timeline
+      // If the step is the same as it was previously, keep our history
+      this.setState({
+        history: this.state.history.slice(0, this.state.stepNumber + 1).concat([{
+          squares: squares,
+          col: i % this.state.boardSize,
+          row: Math.floor(i / this.state.boardSize),
+        }]),
+      });
+    }
+
+    // Jump to the appropriate state
+    this.jumpTo(this.state.stepNumber + 1);
+  }
+
+  handleChange(event) {
+    let newSize = event.target.value;
+
+    if (isNaN(newSize) || newSize.length !== 1) { // Validation
+      return;
+    }
+
+    newSize = parseInt(newSize, 10);
+
+    // Validation part 2
+    if (newSize < 3) {
+      newSize = 3;
+    } else if (newSize > 9) {
+      newSize = 9;
+    }
+
+
+    const boardSize = this.state.boardSize;
+    if (boardSize !== newSize) {
+      this.setState({
+        history: [{
+          squares: Array(newSize * newSize).fill(null),
+        }],
+        stepNumber: 0,
+        xIsNext: true,
+        boardSize: newSize
+      });
+    }
   }
 
   jumpTo(step) {
@@ -83,7 +123,10 @@ class Game extends React.Component {
   render() {
     const history = this.state.history;
     const current = history[this.state.stepNumber];
-    const winner = calculateWinner(current.squares);
+    const isFirstMove = (this.state.stepNumber === 0);
+    const isLastMove = (this.state.stepNumber === history.length - 1);
+
+    const winner = calculateWinner(current.squares, this.state.boardSize);
     const boardIsFull = checkIfBoardIsFull(current.squares);
 
     let moves = history.map((step, move) => {
@@ -116,11 +159,24 @@ class Game extends React.Component {
     return (
       <div className="game">
         <div className="game-board">
+          <label htmlFor="board-size">Board size: </label>
+          <input type="number" name="board-size"
+                 min="3" max="9" value={this.state.boardSize}
+                 onChange={this.handleChange}/>
           <Board
             squares={current.squares}
+            boardSize={this.state.boardSize}
             winningLine={winner ? winner.winningLine : null}
             onClick={(i) => this.handleClick(i)}
           />
+          <button className="previous-move" disabled={isFirstMove}
+                  onClick={() => this.jumpTo(this.state.stepNumber - 1)}>
+            &lt;=
+          </button>
+          <button className="next-move" disabled={isLastMove}
+                  onClick={() => this.jumpTo(this.state.stepNumber + 1)}>
+            =&gt;
+          </button>
         </div>
         <div className="game-info">
           <div>{status}</div>
@@ -134,24 +190,38 @@ class Game extends React.Component {
   }
 }
 
-function calculateWinner(squares) {
-  const lines = [
-    [0, 1, 2],
-    [3, 4, 5],
-    [6, 7, 8],
-    [0, 3, 6],
-    [1, 4, 7],
-    [2, 5, 8],
-    [0, 4, 8],
-    [2, 4, 6],
-  ];
+function calculateWinner(squares, boardSize) {
+  const lines = [];
+
+  // push rows and cols
+  for (let i = 0; i < boardSize; i++) {
+    lines.push(Array.from(Array(boardSize).keys()).map(val => val + boardSize * i));
+    lines.push(Array.from(Array(boardSize).keys()).map(val => val * boardSize + i));
+  }
+
+  // The diagonals have convenient formulas
+  lines.push(Array.from(Array(boardSize).keys()).map(val => val * (boardSize + 1))); // Push first diagonal
+  lines.push(Array.from(Array(boardSize).keys()).map(val => (val + 1) * (boardSize - 1))); // Push second diagonal
+
+
   for (let i = 0; i < lines.length; i++) {
-    const [a, b, c] = lines[i];
-    if (squares[a] && squares[a] === squares[b] && squares[a] === squares[c]) {
+    const line = lines[i];
+    let isWinningLine = true;
+    const squareController = squares[line[0]];
+    if (!squareController) {
+      continue; // Skip if first square not taken
+    }
+    for (let j = 1; j < line.length; j++) {
+      if (squares[line[j]] !== squareController) {
+        isWinningLine = false;
+        break;
+      }
+    }
+    if (isWinningLine) { // Whole line was controlled by one player
       return {
-        winner: squares[a],
-        winningLine: lines[i]
-      };
+        winner: squareController,
+        winningLine: line
+      }
     }
   }
   return null;
