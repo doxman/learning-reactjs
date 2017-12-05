@@ -1,19 +1,30 @@
-body {
-  font: 14px "Century Gothic", Futura, sans-serif;
-  margin: 20px;
-}
-
-ol, ul {
-  padding-left: 30px;
-}
-
-.board-row:after {
-  clear: both;
-  content: "";
+.game, .board-size-selector, .board, .game-status, .move-shift-buttons, [for="board-size"], [name="board-size"], .footer-text {
+  margin-left: auto;
+  margin-right: auto;
   display: table;
+  font: 16px Verdana, Arial, sans-serif;
 }
 
-.status {
+.board-size-selector {
+  margin-bottom: 20px;
+}
+
+[for="board-size"] {
+  margin-bottom: 5px;
+}
+
+[name="board-size"] {
+  border-radius: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  width: 28px;
+}
+
+[name="board-size"]:focus {
+  outline: 0;
+}
+
+.board {
   margin-bottom: 10px;
 }
 
@@ -36,23 +47,60 @@ ol, ul {
   outline: none;
 }
 
-.kbd-navigation .square:focus {
-  background: #ddd;
+.square::-moz-focus-inner {
+  border: none;
 }
 
 .square.highlighted {
   background: yellow;
 }
 
-.game {
-  display: flex;
-  flex-direction: row;
+.game-status {
+  margin-bottom: 10px;
 }
 
-.game-info {
-  margin-left: 20px;
+.next-move, .prev-move {
+  width: 35px;
+  height: 25px;
+  border-radius: 8px;
+  background-repeat: no-repeat;
+  background-position: center;
+  margin-left: 10px;
+  margin-right: 10px;
+}
+
+.next-move:disabled, .prev-move:disabled {
+  opacity: 0.5;
+}
+
+.next-move:hover, .prev-move:hover {
+  background-color: rgb(214, 214, 214);
+}
+
+.next-move:focus, .prev-move:focus {
+  outline: none;
+}
+
+.next-move::-moz-focus-inner, .prev-move::-moz-focus-inner {
+  border: none;
+}
+
+.next-move {
+  background-image: url(./assets/next-arrow.svg);
+}
+
+.prev-move {
+  background-image: url(./assets/prev-arrow.svg);
+}
+
+.game-moves {
+  padding-left: 30px;
 }
 
 .current-step {
   font-weight: bold;
+}
+
+.footer-text {
+  font-size: 10px;
 }

@@ -24,7 +24,7 @@ class Board extends React.Component {
 
   render() {
     return (
-      <div>
+      <div className="board">
         {Array.from(Array(this.props.boardSize).keys()).map(i => {
           return (
             <div key={i} className="board-row">
@@ -158,33 +158,34 @@ class Game extends React.Component {
 
     return (
       <div className="game">
-        <div className="game-board">
-          <label htmlFor="board-size">Board size: </label>
+        <div className="board-size-selector">
+          <label htmlFor="board-size">Board size</label>
           <input type="number" name="board-size"
                  min="3" max="9" value={this.state.boardSize}
-                 onChange={this.handleChange}/>
-          <Board
-            squares={current.squares}
-            boardSize={this.state.boardSize}
-            winningLine={winner ? winner.winningLine : null}
-            onClick={(i) => this.handleClick(i)}
+                 onChange={this.handleChange}
           />
-          <button className="previous-move" disabled={isFirstMove}
-                  onClick={() => this.jumpTo(this.state.stepNumber - 1)}>
-            &lt;=
-          </button>
+        </div>
+        <Board
+          squares={current.squares}
+          boardSize={this.state.boardSize}
+          winningLine={winner ? winner.winningLine : null}
+          onClick={(i) => this.handleClick(i)}
+        />
+        <div className="game-status">{status}</div>
+        <div className="move-shift-buttons">
+          <button className="prev-move" disabled={isFirstMove}
+                  onClick={() => this.jumpTo(this.state.stepNumber - 1)}
+          ></button>
           <button className="next-move" disabled={isLastMove}
-                  onClick={() => this.jumpTo(this.state.stepNumber + 1)}>
-            =&gt;
-          </button>
+                  onClick={() => this.jumpTo(this.state.stepNumber + 1)}
+          ></button>
         </div>
-        <div className="game-info">
-          <div>{status}</div>
-          <ol>{moves}</ol>
-          <label htmlFor="move-order-toggle">Reverse display order: </label>
-          <input type="checkbox" name="move-order-toggle"
-                 onClick={() => this.setState({reverseMoveOrder: !this.state.reverseMoveOrder})}/>
-        </div>
+        <ol className="game-moves">{moves}</ol>
+        <label htmlFor="move-order-toggle">Reverse display order: </label>
+        <input type="checkbox" name="move-order-toggle"
+               onClick={() => this.setState({reverseMoveOrder: !this.state.reverseMoveOrder})}/>
+        <p className="footer-text">Button icons made by <a href="https://www.flaticon.com/authors/lyolya">Lyolya</a> from <a href="www.flaticon.com">www.flaticon.com</a></p>
+        <p className="footer-text">Web app tested in latest Chrome and FireFox for Linux Mint 18.2</p>
       </div>
     );
   }
