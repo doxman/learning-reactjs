@@ -1,4 +1,4 @@
-.game, .board-size-selector, .board, .game-status, .move-shift-buttons, [for="board-size"], [name="board-size"], .footer-text {
+.game, .board-size-selector, [for="board-size"], [name="board-size"], .board, .game-status, .move-shift-buttons, .initial-step, .footer-text {
   margin-left: auto;
   margin-right: auto;
   display: table;
@@ -56,7 +56,21 @@
 }
 
 .game-status {
+  padding: 10px;
+  border-radius: 15px;
   margin-bottom: 10px;
+}
+
+.win-status {
+  background: limegreen;
+}
+
+.tie-status {
+  background: aqua;
+}
+
+.move-shift-buttons {
+  margin-bottom: 20px;
 }
 
 .next-move, .prev-move {
@@ -93,8 +107,50 @@
   background-image: url(./assets/prev-arrow.svg);
 }
 
+.initial-step {
+  margin-bottom: 10px;
+}
+
 .game-moves {
-  padding-left: 30px;
+  counter-reset: moves;
+  border: 2px solid green;
+  border-radius: 5px;
+  padding: 5px;
+  overflow-y: auto;
+  max-height: 184px;
+  max-width: 192px;
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+@-moz-document url-prefix() {
+  .game-moves {
+    max-width: 252px;
+  }
+}
+
+.move-pair::before {
+  counter-increment: moves;
+  content: counter(moves) ".";
+  margin-top: 2px;
+}
+
+.single-digit-pair::before {
+  margin-right: 10px;
+}
+
+.move-pair {
+  display: flex;
+  margin-bottom: 5px;
+}
+
+.move-X, .move-O {
+  margin-left: 10px;
+}
+
+.move-O {
+  margin-right: 36px;
 }
 
 .current-step {

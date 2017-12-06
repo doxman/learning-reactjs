@@ -50,7 +50,6 @@ class Game extends React.Component {
       }],
       stepNumber: 0,
       xIsNext: true,
-      reverseMoveOrder: false,
       boardSize: 3
     };
 
@@ -129,31 +128,47 @@ class Game extends React.Component {
     const winner = calculateWinner(current.squares, this.state.boardSize);
     const boardIsFull = checkIfBoardIsFull(current.squares);
 
-    let moves = history.map((step, move) => {
-      const desc = move ?
-        `Go to move #${move} (${step.col}, ${step.row})` :
-        'Go to game start';
-      return (
-        <li key={move}>
-          <button className={move === this.state.stepNumber ? "current-step" : ""}
-                  onClick={() => this.jumpTo(move)}>
-            {desc}
-          </button>
-        </li>
-      );
+    let moves = history
+      .slice(1)
+      .reduce((acc, val, ind, arr) => {
+        if (ind % 2 === 0) {
+          acc.push(arr.slice(ind, ind + 2));
+        }
+        return acc;
+      }, [])
+      .map((stepPair, idx) => {
+        const firstMove = idx * 2 + 1;
+        const secondMove = firstMove + 1;
+
+        return (
+          <li key={idx} className={"move-pair " + (idx < 9 ? "single-digit-pair" : "")}>
+            <div className="move-X">
+              <button className={"game-move " + (firstMove === this.state.stepNumber ? "current-step" : "")}
+                      onClick={() => this.jumpTo(firstMove)}>
+                {`(${stepPair[0].col}, ${stepPair[0].row})`}
+              </button>
+            </div>
+            {stepPair.length > 1 &&
+              <div className="move-O">
+                <button className={"game-move " + (secondMove === this.state.stepNumber ? "current-step" : "")}
+                        onClick={() => this.jumpTo(secondMove)}>
+                  {`(${stepPair[1].col}, ${stepPair[1].row})`}
+                </button>
+              </div>
+            }
+          </li>
+        );
     });
 
-    if (this.state.reverseMoveOrder) {
-      moves = moves.reverse();
-    }
-
-    let status;
+    let status = {};
     if (winner) {
-      status = 'Winner: ' + winner.winner;
+      status.txt = 'Winner: ' + winner.winner;
+      status.bg = 'win';
     } else if (boardIsFull) {
-      status = 'Tie game';
+      status.txt = 'Tie game';
+      status.bg = 'tie';
     } else {
-      status = 'Next player: ' + (this.state.xIsNext ? 'X' : 'O');
+      status.txt = 'Next player: ' + (this.state.xIsNext ? 'X' : 'O');
     }
 
     return (
@@ -171,7 +186,7 @@ class Game extends React.Component {
           winningLine={winner ? winner.winningLine : null}
           onClick={(i) => this.handleClick(i)}
         />
-        <div className="game-status">{status}</div>
+        <div className={"game-status " + (status.bg != null ? status.bg + "-status" : "")}>{status.txt}</div>
         <div className="move-shift-buttons">
           <button className="prev-move" disabled={isFirstMove}
                   onClick={() => this.jumpTo(this.state.stepNumber - 1)}
@@ -180,10 +195,13 @@ class Game extends React.Component {
                   onClick={() => this.jumpTo(this.state.stepNumber + 1)}
           ></button>
         </div>
-        <ol className="game-moves">{moves}</ol>
-        <label htmlFor="move-order-toggle">Reverse display order: </label>
-        <input type="checkbox" name="move-order-toggle"
-               onClick={() => this.setState({reverseMoveOrder: !this.state.reverseMoveOrder})}/>
+        {moves.length > 0 &&
+          <div>
+            <button className={"initial-step " + (0 === this.state.stepNumber ? "current-step" : "")}
+                  onClick={() => this.jumpTo(0)}>Start</button>
+            <ol className="game-moves">{moves}</ol>
+          </div>
+        }
         <p className="footer-text">Button icons made by <a href="https://www.flaticon.com/authors/lyolya">Lyolya</a> from <a href="www.flaticon.com">www.flaticon.com</a></p>
         <p className="footer-text">Web app tested in latest Chrome and FireFox for Linux Mint 18.2</p>
       </div>
