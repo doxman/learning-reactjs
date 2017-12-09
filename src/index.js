@@ -1,5 +1,6 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
+import * as shortid from 'shortid';
 import './index.css';
 
 function Square(props) {
@@ -12,25 +13,36 @@ function Square(props) {
 
 class Board extends React.Component {
   renderSquare(i, isHighlightedSquare) {
+    const squareID = shortid.generate();
+
     return (
       <Square
-        key={i}
+        key={squareID}
+        id={squareID}
         value={this.props.squares[i]}
-        onClick={() => this.props.onClick(i)}
+        onClick={this.props.onClick.bind(this, i)}
         highlighted={isHighlightedSquare}
       />
     );
   }
 
   render() {
+    const boardSize = this.props.boardSize;
+    const winningLine = this.props.winningLine;
+    const lineNumbers = Array.from(Array(boardSize).keys());
+
+    // For boardSize N, render N rows of N squares
     return (
       <div className="board">
-        {Array.from(Array(this.props.boardSize).keys()).map(i => {
+        {lineNumbers.map(i => {
+          const rowID = shortid.generate();
+
           return (
-            <div key={i} className="board-row">
-              {Array.from(Array(this.props.boardSize).keys()).map(j => {
-                const squareNumber = i * this.props.boardSize + j;
-                const isHighlightedSquare = this.props.winningLine ? this.props.winningLine.includes(squareNumber): false;
+            <div key={rowID} className="board-row">
+              {lineNumbers.map(j => {
+                const squareNumber = i * boardSize + j;
+                const isHighlightedSquare = winningLine ? winningLine.includes(squareNumber): false; // Highlight winning line
+
                 return this.renderSquare(squareNumber, isHighlightedSquare);
               })}
             </div>
@@ -52,37 +64,97 @@ class Game extends React.Component {
       xIsNext: true,
       boardSize: 3
     };
-
-    this.handleChange = this.handleChange.bind(this);
   }
 
-  handleClick(i) {
-    const current = this.state.history[this.state.stepNumber];
-    const squares = current.squares.slice();
-    if (calculateWinner(squares, this.state.boardSize) || squares[i]) {
+  _checkIfBoardIsFull(squares) {
+    for (let i = 0; i < squares.length; i++) {
+      if (!squares[i]) { // Square is empty
+        return false;
+      }
+    }
+    return true;
+  }
+
+  _calculateWinner(squares) {
+    const lines = [];
+    const boardSize = this.state.boardSize;
+    const lineNumbers = Array.from(Array(boardSize).keys());
+
+    // Push rows and cols
+    for (let i = 0; i < boardSize; i++) {
+      lines.push(lineNumbers.map(val => val + boardSize * i));
+      lines.push(lineNumbers.map(val => val * boardSize + i));
+    }
+
+    // The diagonals have convenient formulas
+    lines.push(lineNumbers.map(val => val * (boardSize + 1))); // Push first diagonal
+    lines.push(lineNumbers.map(val => (val + 1) * (boardSize - 1))); // Push second diagonal
+
+
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      const squareController = squares[line[0]];
+      if (!squareController) {
+        continue; // Skip if first square not taken
+      }
+
+      // This is a winning line if all the other squares are controlled by the same player as the first
+      let isWinningLine = true;
+      for (let j = 1; j < line.length; j++) {
+        if (squares[line[j]] !== squareController) {
+          isWinningLine = false;
+          break;
+        }
+      }
+      if (isWinningLine) {
+        return {
+          winner: squareController,
+          winningLine: line
+        }
+      }
+    }
+    return null;
+  }
+
+  _jumpTo(step) {
+    this.setState({
+      stepNumber: step,
+      xIsNext: (step % 2) === 0,
+    });
+  }
+
+  handleBoardClick(i) {
+    const history = this.state.history;
+    const stepNumber = this.state.stepNumber;
+    const boardSize = this.state.boardSize;
+
+    const currentSquares = history[stepNumber].squares.slice();
+
+    // Ignore the click if the game was already won or the square was already taken
+    if (this._calculateWinner(currentSquares) || currentSquares[i]) {
       return;
     }
-    squares[i] = this.state.xIsNext ? 'X' : 'O';
+    currentSquares[i] = this.state.xIsNext ? 'X' : 'O';
 
-    if (this.state.history.length <= this.state.stepNumber + 1 ||
-        this.state.history[this.state.stepNumber + 1].squares[i] !== squares[i]) {
-      // If this is a new step, concat
-      // If this step overrides a previous move, clobber the old timeline
-      // If the step is the same as it was previously, keep our history
+    if (history.length <= stepNumber + 1 ||
+        history[stepNumber + 1].squares[i] !== currentSquares[i]) {
+      // If this click is a new step, concat it to all previous steps
+      // Else, this step will overwrite any previous history after this point
+      // However, if the step was the same as the history, we don't overwrite
       this.setState({
-        history: this.state.history.slice(0, this.state.stepNumber + 1).concat([{
-          squares: squares,
-          col: i % this.state.boardSize,
-          row: Math.floor(i / this.state.boardSize),
+        history: history.slice(0, stepNumber + 1).concat([{
+          squares: currentSquares,
+          col: i % boardSize,
+          row: Math.floor(i / boardSize),
         }]),
       });
     }
 
     // Jump to the appropriate state
-    this.jumpTo(this.state.stepNumber + 1);
+    this._jumpTo(stepNumber + 1);
   }
 
-  handleChange(event) {
+  handleBoardSizeChange(event) {
     let newSize = event.target.value;
 
     if (isNaN(newSize) || newSize.length !== 1) { // Validation
@@ -112,22 +184,20 @@ class Game extends React.Component {
     }
   }
 
-  jumpTo(step) {
-    this.setState({
-      stepNumber: step,
-      xIsNext: (step % 2) === 0,
-    });
-  }
-
   render() {
     const history = this.state.history;
-    const current = history[this.state.stepNumber];
-    const isFirstMove = (this.state.stepNumber === 0);
-    const isLastMove = (this.state.stepNumber === history.length - 1);
+    const stepNumber = this.state.stepNumber;
+    const boardSize = this.state.boardSize;
 
-    const winner = calculateWinner(current.squares, this.state.boardSize);
-    const boardIsFull = checkIfBoardIsFull(current.squares);
+    const currentSquares = history[stepNumber].squares;
 
+    const isFirstMove = (stepNumber === 0);
+    const isLastMove = (stepNumber === history.length - 1);
+
+    const winner = this._calculateWinner(currentSquares);
+    const boardIsFull = this._checkIfBoardIsFull(currentSquares);
+
+    // UI for all moves except the first, for which there is a separate UI element
     let moves = history
       .slice(1)
       .reduce((acc, val, ind, arr) => {
@@ -140,18 +210,20 @@ class Game extends React.Component {
         const firstMove = idx * 2 + 1;
         const secondMove = firstMove + 1;
 
+        const movePairID = shortid.generate();
+
         return (
-          <li key={idx} className={"move-pair " + (idx < 9 ? "single-digit-pair" : "")}>
+          <li key={movePairID} className={"move-pair " + (idx < 9 ? "single-digit-pair" : "")}>
             <div className="move-X">
-              <button className={"game-move " + (firstMove === this.state.stepNumber ? "current-step" : "")}
-                      onClick={() => this.jumpTo(firstMove)}>
+              <button className={"game-move " + (firstMove === stepNumber ? "current-step" : "")}
+                      onClick={() => this._jumpTo(firstMove)}>
                 {`(${stepPair[0].col}, ${stepPair[0].row})`}
               </button>
             </div>
             {stepPair.length > 1 &&
               <div className="move-O">
-                <button className={"game-move " + (secondMove === this.state.stepNumber ? "current-step" : "")}
-                        onClick={() => this.jumpTo(secondMove)}>
+                <button className={"game-move " + (secondMove === stepNumber ? "current-step" : "")}
+                        onClick={() => this._jumpTo(secondMove)}>
                   {`(${stepPair[1].col}, ${stepPair[1].row})`}
                 </button>
               </div>
@@ -176,83 +248,38 @@ class Game extends React.Component {
         <div className="board-size-selector">
           <label htmlFor="board-size">Board size</label>
           <input type="number" name="board-size"
-                 min="3" max="9" value={this.state.boardSize}
-                 onChange={this.handleChange}
+                 min="3" max="9" value={boardSize}
+                 onChange={this.handleBoardSizeChange.bind(this)}
           />
         </div>
         <Board
-          squares={current.squares}
-          boardSize={this.state.boardSize}
+          squares={currentSquares}
+          boardSize={boardSize}
           winningLine={winner ? winner.winningLine : null}
-          onClick={(i) => this.handleClick(i)}
+          onClick={this.handleBoardClick.bind(this)}
         />
         <div className={"game-status " + (status.bg != null ? status.bg + "-status" : "")}>{status.txt}</div>
         <div className="move-shift-buttons">
           <button className="prev-move" disabled={isFirstMove}
-                  onClick={() => this.jumpTo(this.state.stepNumber - 1)}
+                  onClick={() => this._jumpTo(stepNumber - 1)}
           ></button>
           <button className="next-move" disabled={isLastMove}
-                  onClick={() => this.jumpTo(this.state.stepNumber + 1)}
+                  onClick={() => this._jumpTo(stepNumber + 1)}
           ></button>
         </div>
         {moves.length > 0 &&
           <div>
-            <button className={"initial-step " + (0 === this.state.stepNumber ? "current-step" : "")}
-                  onClick={() => this.jumpTo(0)}>Start</button>
+            <button className={"initial-step " + (0 === stepNumber ? "current-step" : "")}
+                  onClick={() => this._jumpTo(0)}>Start</button>
             <ol className="game-moves">{moves}</ol>
           </div>
         }
-        <p className="footer-text">Button icons made by <a href="https://www.flaticon.com/authors/lyolya">Lyolya</a> from <a href="www.flaticon.com">www.flaticon.com</a></p>
+        <p className="footer-text">Button icons made by <a href="https://www.flaticon.com/authors/lyolya">Lyolya</a> from <a href="https://www.flaticon.com">www.flaticon.com</a>
+        </p>
         <p className="footer-text">Web app tested in latest Chrome and FireFox for Linux Mint 18.2</p>
       </div>
     );
   }
-}
-
-function calculateWinner(squares, boardSize) {
-  const lines = [];
-
-  // push rows and cols
-  for (let i = 0; i < boardSize; i++) {
-    lines.push(Array.from(Array(boardSize).keys()).map(val => val + boardSize * i));
-    lines.push(Array.from(Array(boardSize).keys()).map(val => val * boardSize + i));
-  }
-
-  // The diagonals have convenient formulas
-  lines.push(Array.from(Array(boardSize).keys()).map(val => val * (boardSize + 1))); // Push first diagonal
-  lines.push(Array.from(Array(boardSize).keys()).map(val => (val + 1) * (boardSize - 1))); // Push second diagonal
-
-
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i];
-    let isWinningLine = true;
-    const squareController = squares[line[0]];
-    if (!squareController) {
-      continue; // Skip if first square not taken
-    }
-    for (let j = 1; j < line.length; j++) {
-      if (squares[line[j]] !== squareController) {
-        isWinningLine = false;
-        break;
-      }
-    }
-    if (isWinningLine) { // Whole line was controlled by one player
-      return {
-        winner: squareController,
-        winningLine: line
-      }
-    }
-  }
-  return null;
-}
-
-function checkIfBoardIsFull(squares) {
-  for (let i = 0; i < squares.length; i++) {
-    if (!squares[i]) {
-      return false;
-    }
-  }
-  return true;
 }
 
 // ========================================
