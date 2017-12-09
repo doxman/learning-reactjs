@@ -1,5 +1,5 @@
 {
-  "name": "learning-reactjs",
+  "name": "@zeoxyman/tictactoe-react",
   "version": "0.1.0",
   "private": true,
   "dependencies": {
