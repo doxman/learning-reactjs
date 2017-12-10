@@ -29,7 +29,7 @@ class Board extends React.Component {
 
   render() {
     const boardSize = this.props.boardSize;
-    const winningLine = this.props.winningLine;
+    const winningSquares = this.props.winningSquares;
     const lineNumbers = Array.from(Array(boardSize).keys());
 
     // For boardSize N, render N rows of N squares
@@ -42,7 +42,7 @@ class Board extends React.Component {
             <div key={rowID} className="tictactoe-flex-container">
               {lineNumbers.map(j => {
                 const squareNumber = i * boardSize + j;
-                const isHighlightedSquare = winningLine ? winningLine.includes(squareNumber): false; // Highlight winning line
+                const isHighlightedSquare = winningSquares ? winningSquares.includes(squareNumber): false; // Highlight winning lines
 
                 return this.renderSquare(squareNumber, isHighlightedSquare);
               })}
@@ -81,6 +81,9 @@ class Game extends React.Component {
     const boardSize = this.state.boardSize;
     const lineNumbers = Array.from(Array(boardSize).keys());
 
+    let winner = null;
+    let winningSquares = [];
+
     // Push rows and cols
     for (let i = 0; i < boardSize; i++) {
       lines.push(lineNumbers.map(val => val + boardSize * i));
@@ -95,8 +98,8 @@ class Game extends React.Component {
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i];
       const squareController = squares[line[0]];
-      if (!squareController) {
-        continue; // Skip if first square not taken
+      if (!squareController || (winner != null && squareController !== winner)) {
+        continue; // Skip if first square not taken, or if it doesn't match some other winning line
       }
 
       // This is a winning line if all the other squares are controlled by the same player as the first
@@ -108,13 +111,18 @@ class Game extends React.Component {
         }
       }
       if (isWinningLine) {
-        return {
-          winner: squareController,
-          winningLine: line
-        }
+        winner = squareController;
+        winningSquares = winningSquares.concat(line);
       }
     }
-    return null;
+
+    if (!winner) {
+      return null;
+    }
+
+    winningSquares = [...new Set(winningSquares)]; // Easy way to remove duplicates
+
+    return winner != null ? { winner: winner, winningSquares: winningSquares } : null;
   }
 
   _jumpTo(step) {
@@ -256,7 +264,7 @@ class Game extends React.Component {
         <Board
           squares={currentSquares}
           boardSize={boardSize}
-          winningLine={winner ? winner.winningLine : null}
+          winningSquares={winner ? winner.winningSquares : null}
           onClick={this.handleBoardClick.bind(this)}
         />
         <div className={"tictactoe-game-status tictactoe-centered tictactoe-text-component tictactoe-bottom-gap-normal tictactoe-no-select " + (status.bg != null ? `tictactoe-${status.bg}-status` : "")}>{status.txt}</div>
