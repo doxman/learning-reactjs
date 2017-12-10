@@ -1,5 +1,6 @@
 import React from 'react';
-import ReactDOM from 'react-dom';
+// Uncomment to test locally
+// import ReactDOM from 'react-dom';
 import * as shortid from 'shortid';
 import './index.css';
 
@@ -54,7 +55,7 @@ class Board extends React.Component {
   }
 }
 
-class Game extends React.Component {
+class TicTacToe extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
@@ -295,7 +296,10 @@ class Game extends React.Component {
 
 // ========================================
 
-ReactDOM.render(
-  <Game />,
+// Uncomment to test locally
+/*ReactDOM.render(
+  <TicTacToe />,
   document.getElementById('root')
-);
+);*/
+
+export default TicTacToe;
