@@ -5,7 +5,8 @@ import './index.css';
 
 function Square(props) {
   return (
-    <button className={"square no-outline " + (props.highlighted ? "highlighted" : "")} onClick={props.onClick}>
+    <button className={"tictactoe-square tictactoe-no-outline tictactoe-no-select " + (props.highlighted ? "tictactoe-highlighted" : "")}
+            onClick={props.onClick}>
       {props.value}
     </button>
   );
@@ -33,12 +34,12 @@ class Board extends React.Component {
 
     // For boardSize N, render N rows of N squares
     return (
-      <div className="board centered flex-container bottom-gap-normal">
+      <div className="tictactoe-board tictactoe-centered tictactoe-flex-container tictactoe-bottom-gap-normal">
         {lineNumbers.map(i => {
           const rowID = shortid.generate();
 
           return (
-            <div key={rowID} className="flex-container">
+            <div key={rowID} className="tictactoe-flex-container">
               {lineNumbers.map(j => {
                 const squareNumber = i * boardSize + j;
                 const isHighlightedSquare = winningLine ? winningLine.includes(squareNumber): false; // Highlight winning line
@@ -213,16 +214,16 @@ class Game extends React.Component {
         const movePairID = shortid.generate();
 
         return (
-          <li key={movePairID} className={"move-pair flex-container bottom-gap-small " + (idx < 9 ? "single-digit-pair" : "")}>
+          <li key={movePairID} className={"tictactoe-move-pair tictactoe-flex-container tictactoe-bottom-gap-small " + (idx < 9 ? "tictactoe-single-digit-pair" : "")}>
             <div className="left-indented-btn">
-              <button className={firstMove === stepNumber ? "current-step" : ""}
+              <button className={firstMove === stepNumber ? "tictactoe-current-step" : ""}
                       onClick={() => this._jumpTo(firstMove)}>
                 {`(${stepPair[0].col}, ${stepPair[0].row})`}
               </button>
             </div>
             {stepPair.length > 1 &&
-              <div className="left-indented-btn right-move-column">
-                <button className={secondMove === stepNumber ? "current-step" : ""}
+              <div className="tictactoe-left-indented-btn tictactoe-right-move-column">
+                <button className={secondMove === stepNumber ? "tictactoe-current-step" : ""}
                         onClick={() => this._jumpTo(secondMove)}>
                   {`(${stepPair[1].col}, ${stepPair[1].row})`}
                 </button>
@@ -245,9 +246,9 @@ class Game extends React.Component {
 
     return (
       <div>
-        <div className="centered bottom-gap-large">
-          <label htmlFor="board-size" className="text-component centered bottom-gap-small">Board size</label>
-          <input className="text-component centered rounded-input no-outline" type="number" name="board-size"
+        <div className="tictactoe-centered tictactoe-bottom-gap-large">
+          <label htmlFor="tictactoe-board-size" className="tictactoe-text-component tictactoe-centered tictactoe-bottom-gap-small tictactoe-no-select">Board size</label>
+          <input className="tictactoe-text-component tictactoe-centered tictactoe-rounded-input tictactoe-no-outline" type="number" name="tictactoe-board-size"
                  min="3" max="9" value={boardSize}
                  onChange={this.handleBoardSizeChange.bind(this)}
           />
@@ -258,25 +259,27 @@ class Game extends React.Component {
           winningLine={winner ? winner.winningLine : null}
           onClick={this.handleBoardClick.bind(this)}
         />
-        <div className={"game-status centered text-component bottom-gap-normal " + (status.bg != null ? status.bg + "-status" : "")}>{status.txt}</div>
-        <div className="centered bottom-gap-large">
-          <button className="move-shift-btn left-indented-btn rounded-input no-outline prev" disabled={isFirstMove}
+        <div className={"tictactoe-game-status tictactoe-centered tictactoe-text-component tictactoe-bottom-gap-normal tictactoe-no-select " + (status.bg != null ? `tictactoe-${status.bg}-status` : "")}>{status.txt}</div>
+        <div className="tictactoe-centered tictactoe-bottom-gap-large">
+          <button className="tictactoe-move-shift-btn tictactoe-left-indented-btn tictactoe-rounded-input tictactoe-no-outline tictactoe-prev"
+                  disabled={isFirstMove}
                   onClick={() => this._jumpTo(stepNumber - 1)}
           ></button>
-          <button className="move-shift-btn left-indented-btn rounded-input no-outline next" disabled={isLastMove}
+          <button className="tictactoe-move-shift-btn tictactoe-left-indented-btn tictactoe-rounded-input tictactoe-no-outline tictactoe-next"
+                  disabled={isLastMove}
                   onClick={() => this._jumpTo(stepNumber + 1)}
           ></button>
         </div>
         {moves.length > 0 &&
           <div>
-            <button className={"centered text-component bottom-gap-normal " + (0 === stepNumber ? "current-step" : "")}
-                  onClick={() => this._jumpTo(0)}>Start</button>
-            <ol className="game-moves centered text-component">{moves}</ol>
+            <button className={"tictactoe-centered tictactoe-text-component tictactoe-bottom-gap-normal tictactoe-no-select " + (0 === stepNumber ? "tictactoe-current-step" : "")}
+                    onClick={() => this._jumpTo(0)}>Start</button>
+            <ol className="tictactoe-game-moves tictactoe-centered tictactoe-text-component tictactoe-no-select">{moves}</ol>
           </div>
         }
-        <p className="footer-text centered">Button icons made by <a href="https://www.flaticon.com/authors/lyolya">Lyolya</a> from <a href="https://www.flaticon.com">www.flaticon.com</a>
+        <p className="tictactoe-footer-text tictactoe-centered tictactoe-no-select">Button icons made by <a href="https://www.flaticon.com/authors/lyolya">Lyolya</a> from <a href="https://www.flaticon.com">www.flaticon.com</a>
         </p>
-        <p className="footer-text centered">Web app tested in latest Chrome and FireFox for Linux Mint 18.2</p>
+        <p className="tictactoe-footer-text tictactoe-centered tictactoe-no-select">Web app tested in latest Chrome and FireFox for Linux Mint 18.2</p>
       </div>
     );
   }
