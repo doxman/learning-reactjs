@@ -1,6 +1,5 @@
 import React from 'react';
-// Uncomment to test locally
-// import ReactDOM from 'react-dom';
+import ReactDOM from 'react-dom';
 import * as shortid from 'shortid';
 import './index.css';
 
@@ -296,10 +295,7 @@ class TicTacToe extends React.Component {
 
 // ========================================
 
-// Uncomment to test locally
-/*ReactDOM.render(
+ReactDOM.render(
   <TicTacToe />,
   document.getElementById('root')
-);*/
-
-export default TicTacToe;
+);
